@@ -1,4 +1,8 @@
 import { test, expect } from '@playwright/test';
+test.use({
+  geolocation: { latitude: 24.7136, longitude: 46.6753 },
+  permissions: ['geolocation'],
+});
 
 test('UI-00 صفحة الدخول تُظهر حقولها', async ({ page }) => {
   const loginForm = page.locator('#form_login');
@@ -36,11 +40,11 @@ test('UI-02 كلمة مرور خاطئة تُظهر رسالة خطأ', async ({
   await loginForm.getByPlaceholder('Company name').fill(process.env.ERP_COMPANY!);
   await loginForm.getByPlaceholder('Username').fill(process.env.ERP_FAIL_USER!);
   await loginForm.getByPlaceholder('Password').fill('wrong-password-123');
-  await page.waitForTimeout(3000); // تجربة تشخيص فقط، وستُحذف
+ 
   await loginForm.getByRole('button', { name: 'Login' }).click();
 
   // 1. الرسالة ظهرت
-  await expect(page.getByText('Login Failed, Please try again')).toBeVisible({timeout:15000});
+  await expect(page.getByText('Login Failed, Please try again')).toBeVisible();
   // 2. بقينا في صفحة الدخول
   await expect(page).toHaveURL(/login/);
 });
