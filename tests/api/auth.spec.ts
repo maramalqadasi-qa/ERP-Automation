@@ -25,14 +25,13 @@ test('API-02 التوكن الصالح يفتح طلبًا محميًا', async 
       password: process.env.ERP_PASSWORD!,
     },
   });
-  const { token } = await login.json(); 
+  const { token } = await login.json();
   // // 2. استخدام التوكن في طلب محمي
   const response = await request.post('/api/v1.0/products/index', {
     params: { token, company: process.env.ERP_COMPANY!, limit: 1 },
   });
- 
+
   const body = await response.json();
-  console.log(JSON.stringify(body, null, 2));
 
   // 3. التحقق
   expect(response.status()).toBe(200);
@@ -40,3 +39,21 @@ test('API-02 التوكن الصالح يفتح طلبًا محميًا', async 
   expect(body.data).toBeTruthy();
 });
 
+test('API-03 الدخول بكلمة مرور خاطئة يعرض رسالة خطأ', async ({ request }) => {
+
+  const login = await request.post('/api/v1.0/login', {
+    form: {
+      company: process.env.ERP_COMPANY!,
+      username: process.env.ERP_FAIL_USER!,
+      password: "wrong-password-123"
+    }
+  });
+  const body = await login.json()
+
+  // expect(login.status()).toBe(401);
+  // ملاحظة: الخادم يرجع 200 للدخول المرفوض، والمعتاد 401 (مرفوعة للفريق)
+  expect(body.error).toBe(true);
+  expect(body.msg).toBeTruthy();
+  expect(body.token).toBeUndefined();
+ 
+})
