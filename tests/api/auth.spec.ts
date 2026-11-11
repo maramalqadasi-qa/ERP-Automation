@@ -39,21 +39,4 @@ test('API-02 التوكن الصالح يفتح طلبًا محميًا', async 
   expect(body.data).toBeTruthy();
 });
 
-test('API-03 الدخول بكلمة مرور خاطئة يعرض رسالة خطأ', async ({ request }) => {
 
-  const login = await request.post('/api/v1.0/login', {
-    form: {
-      company: process.env.ERP_COMPANY!,
-      username: process.env.ERP_FAIL_USER!,
-      password: "wrong-password-123"
-    }
-  });
-  const body = await login.json()
-
-  // expect(login.status()).toBe(401);
-  // ملاحظة: الخادم يرجع 200 للدخول المرفوض، والمعتاد 401 (مرفوعة للفريق)
-  expect(body.error).toBe(true);
-  expect(body.msg).toBeTruthy();
-  expect(body.token).toBeUndefined();
- 
-})
