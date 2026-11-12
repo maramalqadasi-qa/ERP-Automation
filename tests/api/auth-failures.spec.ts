@@ -19,5 +19,24 @@ test('API-03 الدخول بكلمة مرور خاطئة يعرض رسالة خ�
   expect(body.error).toBe(true);
   expect(body.msg).toBeTruthy();
   expect(body.token).toBeUndefined();
- 
+
+})
+
+
+
+test('API-04 التوكن غير الصالح يرفض', async ({ request }) => {
+  const response = await request.post('/api/v1.0/products/index', {
+    params: {
+      token: 'invalid-token-123',
+      company: process.env.ERP_COMPANY!,
+      limit: 1
+    }
+  })
+  const body = await response.json()
+  // ملاحظة: الخادم يرجع 200 للتوكن غير الصالح، والمعتاد 401
+  expect(body.error).toBe(true);
+  expect(body.no_login).toBe(true);
+  expect(body.msg).toBeTruthy()
+  expect(body.data).toBeUndefined();
+
 })
