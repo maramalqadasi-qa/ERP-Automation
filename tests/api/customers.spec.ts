@@ -59,3 +59,28 @@ test("API-07 إنشاء عميل يرجع معرّفه", async ({ request }) => 
     expect(Number(body.item_id)).toBe(body.id);
 })
 
+test('API-08 رفض عميل دون اسم', async ({ request }) => {
+    // عيب معروف: customers/add يُنشئ عميلًا دون الحقل الإلزامي name (بانتظار إصلاح الفريق)
+    test.fail();
+    const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+    const customerPhone = `5${String(stamp).slice(-8)}`
+
+    const login = await request.post('/api/v1.0/login', {
+        form: {
+            company: process.env.ERP_COMPANY!,
+            username: process.env.ERP_USER!,
+            password: process.env.ERP_PASSWORD!
+        }
+    })
+    const { token } = await login.json()
+
+    const response = await request.post('/api/v1.0/customers/add', {
+        params: { token, company: process.env.ERP_COMPANY! },
+        form: { phone: customerPhone }
+    })
+    const body = await response.json()
+
+    expect(body.error).toBe(true);
+    expect(body.msg).toBeTruthy();
+    expect(body.item_id).toBeUndefined();
+})

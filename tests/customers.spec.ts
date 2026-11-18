@@ -72,3 +72,9 @@ test('UI-07 العميل الجديد يظهر في قائمة العملاء', 
     
  
 })
+
+// test('API-08 رفض عميل دون اسم',async({request})=>{
+//    test.setTimeout(90000);
+//    const loginForm=await 
+
+// })
