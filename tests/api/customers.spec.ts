@@ -37,6 +37,8 @@ test("API-07 إنشاء عميل يرجع معرّفه", async ({ request }) => 
     const stamp = Date.now();
     const customerName = `AUTO-API-${stamp}`;
     const customerPhone = `5${String(stamp).slice(-8)}`;
+
+
     // 1. الدخول
     const login = await request.post('/api/v1.0/login', {
         form: {
@@ -85,7 +87,7 @@ test('API-08 رفض عميل دون اسم', async ({ request }) => {
     expect(body.item_id).toBeUndefined();
 })
 
-test('API-09 جلب العميل ومطابقة بياناته',async ({request})=>{
+test('API-09 جلب العميل ومطابقة بياناته', async ({ request }) => {
     // بيانات فريدة لهذا التشغيل
     const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`
     const customerName = `AUTO-API-${stamp}`;
@@ -104,17 +106,18 @@ test('API-09 جلب العميل ومطابقة بياناته',async ({request}
         params: { token, company: process.env.ERP_COMPANY! },
         form: { name: customerName, phone: customerPhone }
     })
-    
+
     const body = await response.json()
     //التحقق من نجاح الإضافة
     expect(body.error).toBe(false)
 
     const customerID = body.item_id;
-    
-    const getCustomerDetails =await request.get(`/api/v1.0/customers/${customerID}`,{
+
+
+    const getCustomerDetails = await request.get(`/api/v1.0/customers/${customerID}`, {
         params: { token, company: process.env.ERP_COMPANY! },
     })
-    const customerDetails=await getCustomerDetails.json();
+    const customerDetails = await getCustomerDetails.json();
 
 
     //التحقق من بيانات العميل 
@@ -124,8 +127,58 @@ test('API-09 جلب العميل ومطابقة بياناته',async ({request}
     expect(customerDetails.data.id).toBe(customerID);
     expect(customerDetails.data.name).toBe(customerName);
     expect(customerDetails.data.phone).toBe(customerPhone);
-    
-    
+
+
+})
+
+test("API-10 تعديل عميل ومطابقة بياناته", async ({ request }) => {
+    // بيانات فريدة لهذا التشغيل 
+    const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+    const customerName = `AUTO-API-${stamp}`;
+    const customerPhone = `5${String(stamp).slice(-8)}`
+    //الدخول
+    const login = await request.post('/api/v1.0/login', {
+        form: {
+            company: process.env.ERP_COMPANY!,
+            username: process.env.ERP_USER!,
+            password: process.env.ERP_PASSWORD!
+        }
+    })
+    const { token } = await login.json();
+
+    const createNewCustomer = await request.post("/api/v1.0/customers/add", {
+        params: { token, company: process.env.ERP_COMPANY! },
+        form: { name: customerName, phone: customerPhone }
+    })
+    const body = await createNewCustomer.json()
+    //التحقق من نجاح الإضافة
+    expect(body.error).toBe(false)
+    // اخذ الرقم الخاص بالعميل لاستخدامة في طلب التعديل
+    const customerID = body.item_id;
+    const newStamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+    const customerPhone2 = `5${String(newStamp).slice(-8)}`;
+    expect(customerPhone2).not.toBe(customerPhone);   // نتأكد أن الهاتف الجديد مختلف فعلًا
+    // تعديل العميل
+    const editCustomr = await request.post(`/api/v1.0/customers/update/${customerID}`, {
+        params: { token, company: process.env.ERP_COMPANY! },
+        form: { phone: customerPhone2 }
+    })
+    const edittingBody = await editCustomr.json()
+
+    // جلب العميل بعد التعديل
+    const getCustomer = await request.get(`/api/v1.0/customers/${customerID}`, {
+        params: { token, company: process.env.ERP_COMPANY! },
+    });
+    const customerAfterEdit = await getCustomer.json();
+
+    expect(editCustomr.status()).toBe(200)
+    expect(edittingBody.error).toBe(false)
+    expect(getCustomer.status()).toBe(200);
+    expect(customerAfterEdit.data.phone).toBe(customerPhone2);       // التعديل طُبق
+    expect(customerAfterEdit.data.name).toBe(customerName);    // الاسم لم يُمس
+
+
+
 
 
 
