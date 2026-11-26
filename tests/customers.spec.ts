@@ -85,7 +85,7 @@ test('UI-08 رفض حفظ عميل دون اسم', async ({ page }) => {
   await loginForm.locator('[name="password"]').fill(process.env.ERP_PASSWORD!)
   await loginForm.locator('button[type="submit"]').click()
   await expect(page).toHaveURL(/welcome/);
-   // 2. فتح نموذج الإضافة، وملء الهاتف فقط
+  // 2. فتح نموذج الإضافة، وملء الهاتف فقط
   await page.goto('/customers/index');
   await page.getByTitle('Add').click();
   const dialog = page.getByRole('dialog', { name: 'Add Customer' });
@@ -99,6 +99,68 @@ test('UI-08 رفض حفظ عميل دون اسم', async ({ page }) => {
 
   // 4. التحقق الأهم: النافذة ما زالت مفتوحة، فلم يُحفظ شيء
   await expect(dialog).toBeVisible();
+
+
+})
+
+test('UI-09 تعديل هاتف عميل  ', async ({ page }) => {
+  test.setTimeout(60000)
+  // بيانات فريدة لهذا التشغيل
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  const customerName = `AUTO-${stamp}`;
+  const customerPhone = `5${String(stamp).slice(-8)}`;
+  const newStamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  const newPhone = `5${String(newStamp).slice(-8)}`;
+  expect(newPhone).not.toBe(customerPhone);
+
+  // 1. الدخول
+  const loginForm = page.locator('#form_login');
+  await page.goto('/login');
+  await loginForm.locator('[name="company"]').fill(process.env.ERP_COMPANY!);
+  await loginForm.locator('[name="identity"]').fill(process.env.ERP_USER!);
+  await loginForm.locator('[name="password" ]').fill(process.env.ERP_PASSWORD!);
+  await loginForm.locator('button[type="submit" ]').click();
+  await expect(page).toHaveURL(/welcome/);
+  // 2. تجهيز البيانات: إضافة عميل 
+  await page.goto('/customers/index');
+  await page.getByTitle('Add').click();
+  const dialog = page.getByRole('dialog', { name: 'Add Customer' });
+  await dialog.getByLabel('Name', { exact: true }).fill(customerName);
+  await dialog.getByLabel('Phone', { exact: true }).fill(customerPhone);
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(dialog).toBeHidden();
+  const successDialog = page.getByRole('dialog', { name: 'Customer successfully added' });
+  await successDialog.getByRole('button', { name: 'OK' }).click();
+
+  // 3. البحث عن العميل  
+  const searchBox = page.getByPlaceholder('Name', { exact: true }).first();
+  await searchBox.fill(customerName);
+  await searchBox.press('Enter');
+  const rows = page.locator('table tbody tr');
+  await expect(rows).toHaveCount(1);
+  const customerRow = rows.first();
+
+    // 4. فتح التعديل من صف العميل نفسه
+  await customerRow.getByTitle('Actions').click();
+  await customerRow.getByRole('link', { name: 'Edit' }).click();
+  const editDialog = page.getByRole('dialog', { name: 'Edit Customer' });
+
+  // 5. تغيير الهاتف والحفظ
+  await editDialog.getByLabel('Phone', { exact: true }).fill(newPhone);
+  await editDialog.getByRole('button', { name: 'Save' }).click();
+    // إغلاق رسالة نجاح التعديل
+  const updatedDialog = page.getByRole('dialog', { name: 'Customer successfully updated' });
+  await updatedDialog.getByRole('button', { name: 'OK' }).click();
+  await expect(updatedDialog).toBeHidden();
+
+  // 6. التحقق: إعادة تحميل الصفحة، ثم البحث، والصف يعرض الهاتف الجديد
+  await page.reload();
+  await searchBox.fill(customerName);
+  await searchBox.press('Enter');
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText(newPhone);
+  await expect(rows.first()).not.toContainText(customerPhone);
+
 
 
 })
