@@ -1,42 +1,42 @@
 import { test, expect } from '@playwright/test'
 test("UI-06 إضافة عميل بالحقول الإلزامية", async ({ page }) => {
-    test.setTimeout(60000)
-    const loginForm = page.locator("#form_login")
-    const login = await page.goto(`/login`);
-    await loginForm.locator('[name="company"]').fill(process.env.ERP_COMPANY!)
-    await loginForm.locator('[name="identity"]').fill(process.env.ERP_USER!)
-    await loginForm.locator('[name="password"]').fill(process.env.ERP_PASSWORD!)
-    await loginForm.locator('button[type="submit"]').click()
-    await expect(page).toHaveURL(/welcome/);
-    await page.goto(`/customers/index`)
-    // بيانات فريدة لهذا التشغيل
-    const stamp = Date.now();
-    const customerName = `AUTO-${stamp}`;
-    const customerPhone = `5${String(stamp).slice(-8)}`;
-    //النقر على زر الإضافة 
-    await page.getByTitle('Add').click();
-   // إدخال الاسم
-  
-    await page.getByLabel('Name', { exact: true }).fill(customerName);
-    //إدخال بيانات رقم الهاتف
-    await page.getByLabel('Phone').fill(customerPhone);
-    // حفظ العميل 
-    await page.getByRole('button', { name: 'Save' }).click();
-   //التحقق من ظهور رسالة النجاح
-    await expect (page.getByRole('heading', { name: 'Customer successfully Added' })).toBeVisible()
-    await expect(page.getByRole('dialog', { name: 'Add Customer' })).toBeHidden();
+  test.setTimeout(60000)
+  const loginForm = page.locator("#form_login")
+  const login = await page.goto(`/login`);
+  await loginForm.locator('[name="company"]').fill(process.env.ERP_COMPANY!)
+  await loginForm.locator('[name="identity"]').fill(process.env.ERP_USER!)
+  await loginForm.locator('[name="password"]').fill(process.env.ERP_PASSWORD!)
+  await loginForm.locator('button[type="submit"]').click()
+  await expect(page).toHaveURL(/welcome/);
+  await page.goto(`/customers/index`)
+  // بيانات فريدة لهذا التشغيل
+  const stamp = Date.now();
+  const customerName = `AUTO-${stamp}`;
+  const customerPhone = `5${String(stamp).slice(-8)}`;
+  //النقر على زر الإضافة 
+  await page.getByTitle('Add').click();
+  // إدخال الاسم
+
+  await page.getByLabel('Name', { exact: true }).fill(customerName);
+  //إدخال بيانات رقم الهاتف
+  await page.getByLabel('Phone').fill(customerPhone);
+  // حفظ العميل 
+  await page.getByRole('button', { name: 'Save' }).click();
+  //التحقق من ظهور رسالة النجاح
+  await expect(page.getByRole('heading', { name: 'Customer successfully Added' })).toBeVisible()
+  await expect(page.getByRole('dialog', { name: 'Add Customer' })).toBeHidden();
 
 
 })
 
 test('UI-07 العميل الجديد يظهر في قائمة العملاء', async ({ page }) => {
-    test.setTimeout(90000);
+  test.setTimeout(90000);
 
   // بيانات فريدة لهذا التشغيل
   const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
   const customerName = `AUTO-${stamp}`;
   const customerPhone = `5${String(stamp).slice(-8)}`;
-   // 1. الدخول
+  // 1. الدخول
   const loginForm = page.locator('#form_login');
   await page.goto('/login');
   await loginForm.locator('[name="company"]').fill(process.env.ERP_COMPANY!);
@@ -60,7 +60,7 @@ test('UI-07 العميل الجديد يظهر في قائمة العملاء', 
   await expect(successDialog).toBeHidden();
 
   // 3. البحث عن العميل في القائمة
-  const searchBox =  page.getByPlaceholder('Name', { exact: true }).first();
+  const searchBox = page.getByPlaceholder('Name', { exact: true }).first();
   await searchBox.fill(customerName);
   await searchBox.press('Enter');
 
@@ -69,12 +69,38 @@ test('UI-07 العميل الجديد يظهر في قائمة العملاء', 
   await expect(rows).toHaveCount(1);
   await expect(rows.first()).toContainText(customerName);
   await expect(rows.first()).toContainText(customerPhone);
-    
- 
+
+
 })
 
-// test('API-08 رفض عميل دون اسم',async({request})=>{
-//    test.setTimeout(90000);
-//    const loginForm=await 
+test('UI-08 رفض حفظ عميل دون اسم', async ({ page }) => {
+  test.setTimeout(60000);
+  const stamp = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  const customerPhone = `5${String(stamp).slice(-8)}`;
+  // 1. الدخول
+  const loginForm = page.locator('#form_login');
+  await page.goto('/login');
+  await loginForm.locator('[name="company"]').fill(process.env.ERP_COMPANY!)
+  await loginForm.locator('[name="identity"]').fill(process.env.ERP_USER!)
+  await loginForm.locator('[name="password"]').fill(process.env.ERP_PASSWORD!)
+  await loginForm.locator('button[type="submit"]').click()
+  await expect(page).toHaveURL(/welcome/);
+  await page.goto(`/customers/index`)
+   // 2. فتح نموذج الإضافة، وملء الهاتف فقط
+  await page.goto('/customers/index');
+  await page.getByTitle('Add').click();
+  const dialog = page.getByRole('dialog', { name: 'Add Customer' });
+  await dialog.getByLabel('Phone', { exact: true }).fill(customerPhone);
+  // 3. التحقق
+ 
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  // التحقق: المتصفح يعدّ حقل الاسم ناقصًا
+  const nameInput = dialog.getByLabel('Name', { exact: true });
+  const isMissing = await nameInput.evaluate(el => (el as HTMLInputElement).validity.valueMissing);
+  expect(isMissing).toBe(true);
 
-// })
+  // 4. التحقق الأهم: النافذة ما زالت مفتوحة، فلم يُحفظ شيء
+  await expect(dialog).toBeVisible();
+
+
+})
