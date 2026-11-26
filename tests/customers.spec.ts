@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 test("UI-06 إضافة عميل بالحقول الإلزامية", async ({ page }) => {
   test.setTimeout(60000)
   const loginForm = page.locator("#form_login")
-  const login = await page.goto(`/login`);
+  await page.goto(`/login`);
   await loginForm.locator('[name="company"]').fill(process.env.ERP_COMPANY!)
   await loginForm.locator('[name="identity"]').fill(process.env.ERP_USER!)
   await loginForm.locator('[name="password"]').fill(process.env.ERP_PASSWORD!)
@@ -85,14 +85,12 @@ test('UI-08 رفض حفظ عميل دون اسم', async ({ page }) => {
   await loginForm.locator('[name="password"]').fill(process.env.ERP_PASSWORD!)
   await loginForm.locator('button[type="submit"]').click()
   await expect(page).toHaveURL(/welcome/);
-  await page.goto(`/customers/index`)
    // 2. فتح نموذج الإضافة، وملء الهاتف فقط
   await page.goto('/customers/index');
   await page.getByTitle('Add').click();
   const dialog = page.getByRole('dialog', { name: 'Add Customer' });
   await dialog.getByLabel('Phone', { exact: true }).fill(customerPhone);
-  // 3. التحقق
- 
+  // 3. التحقق:النقر على زر حفظ دون إدخال الاسم
   await dialog.getByRole('button', { name: 'Save' }).click();
   // التحقق: المتصفح يعدّ حقل الاسم ناقصًا
   const nameInput = dialog.getByLabel('Name', { exact: true });
