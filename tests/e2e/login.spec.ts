@@ -1,31 +1,21 @@
-import { test, expect } from '@playwright/test';
-
-
+import {test,expect} from '@playwright/test'
+import { LoginPage } from '../../pages/LoginPage';
 test('UI-00 صفحة الدخول تُظهر حقولها', async ({ page }) => {
-  const loginForm = page.locator('#form_login');
-  await page.goto(`${process.env.ERP_URL}/login`);
+  const loginPage = new LoginPage(page);
+  await loginPage.goto();
   await expect(page).toHaveURL(/login/);
 
-  await expect(loginForm.getByPlaceholder('Company name')).toBeVisible();
-
-
-  await expect(loginForm.getByPlaceholder('Username')).toBeVisible();
-
-  await expect(loginForm.getByPlaceholder('Password')).toBeVisible();
-  await expect(loginForm.getByPlaceholder('Password')).toHaveAttribute('type', 'password');
-
-  await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
-
+  await expect(loginPage.companyInput).toBeVisible();
+  await expect(loginPage.usernameInput).toBeVisible();
+  await expect(loginPage.passwordInput).toBeVisible();
+  await expect(loginPage.passwordInput).toHaveAttribute('type', 'password');
+  await expect(loginPage.submitButton).toBeVisible();
 });
-test('UI-01 الدخول ببيانات صحيحة  ', async ({ page }) => {
-  const loginForm = page.locator('#form_login');
-  await page.goto(`${process.env.ERP_URL}/login`);
-  await loginForm.getByPlaceholder('Company name').fill(process.env.ERP_COMPANY!);
 
-  await loginForm.getByPlaceholder('Username').fill(process.env.ERP_USER!);
-  await loginForm.getByPlaceholder('Password').fill(process.env.ERP_PASSWORD!)
+test('UI-01 الدخول ببيانات صحيحة', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+  await loginPage.login(process.env.ERP_COMPANY!, process.env.ERP_USER!, process.env.ERP_PASSWORD!);
 
-  await loginForm.getByRole('button', { name: 'Login' }).click();
   await expect(page).toHaveURL(/welcome/);
   await expect(page.getByRole('link', { name: process.env.ERP_COMPANY! })).toBeVisible();
 });
